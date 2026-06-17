@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3002:3000"
+    environment:
+      FLAG: GCUP{H0w_D1d_Y0u_R34d_T14t}

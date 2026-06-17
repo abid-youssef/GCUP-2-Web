@@ -1,0 +1,9 @@
+services:
+  bookstore:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      FLAG: "GCUP{th4ths_4ll_f0lks}"
+      SECRET_KEY: "09e71098a2d44110a509bd732b44b07b09d387e63cc3f01f"
+    restart: unless-stopped

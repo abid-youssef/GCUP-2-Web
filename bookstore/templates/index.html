@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book Catalogue</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia, serif; background: #fafaf8; color: #222; }
+    header { background: #2c3e50; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 1.5rem; font-weight: normal; letter-spacing: 1px; }
+    header a { color: #ccc; font-size: 0.85rem; text-decoration: none; font-family: monospace; }
+    header a:hover { color: #fff; }
+    .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .filters { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .filter-btn { padding: 0.4rem 1rem; border: 1px solid #aaa; background: #fff; cursor: pointer; border-radius: 2px; font-size: 0.9rem; }
+    .filter-btn:hover, .filter-btn.active { background: #2c3e50; color: #fff; border-color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    th { text-align: left; padding: 0.75rem 1rem; background: #f0ede8; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #555; border-bottom: 2px solid #ddd; }
+    td { padding: 0.75rem 1rem; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fdf9f3; }
+    .empty { text-align: center; padding: 2rem; color: #888; font-style: italic; }
+    footer { text-align: center; padding: 2rem; color: #aaa; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Book Catalogue</h1>
+  <a href="/login">Admin</a>
+</header>
+<div class="container">
+  <div class="filters">
+    <button class="filter-btn active" data-genre="">All</button>
+    <button class="filter-btn" data-genre="fiction">Fiction</button>
+    <button class="filter-btn" data-genre="science">Science</button>
+    <button class="filter-btn" data-genre="history">History</button>
+    <button class="filter-btn" data-genre="biography">Biography</button>
+    <span style="margin-left:auto;display:flex;gap:.4rem;align-items:center">
+      <select id="sort-field" style="padding:.35rem .5rem;border:1px solid #aaa;font-size:.85rem">
+        <option value="title">Title</option>
+        <option value="author">Author</option>
+        <option value="id">Added</option>
+      </select>
+      <select id="sort-order" style="padding:.35rem .5rem;border:1px solid #aaa;font-size:.85rem">
+        <option value="asc">A → Z</option>
+        <option value="desc">Z → A</option>
+      </select>
+    </span>
+  </div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Title</th><th>Author</th></tr>
+    </thead>
+    <tbody id="book-list">
+      <tr><td colspan="3" class="empty">Loading…</td></tr>
+    </tbody>
+  </table>
+</div>
+<footer>Look Harder</footer>
+<script>
+  let currentGenre = '';
+
+  async function loadBooks() {
+    await fetch('/api/prefs', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        genre: currentGenre,
+        sort: {
+          field: document.getElementById('sort-field').value,
+          order: document.getElementById('sort-order').value
+        }
+      })
+    });
+    const res = await fetch('/books');
+    const books = await res.json();
+    const tbody = document.getElementById('book-list');
+    if (!books.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty">No books found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = books.map(b =>
+      `<tr><td>${b.id}</td><td>${b.title}</td><td>${b.author}</td></tr>`
+    ).join('');
+  }
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentGenre = btn.dataset.genre;
+      loadBooks();
+    });
+  });
+
+  document.getElementById('sort-field').addEventListener('change', loadBooks);
+  document.getElementById('sort-order').addEventListener('change', loadBooks);
+
+  loadBooks();
+</script>
+</body>
+</html>

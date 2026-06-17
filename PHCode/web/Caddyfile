@@ -1,0 +1,15 @@
+{
+    admin off
+}
+
+:3000 {
+    header Content-Security-Policy "script-src 'none'; default-src 'self'; base-uri 'none'"
+
+    reverse_proxy localhost:8001 localhost:8002 localhost:8003 localhost:8004 {
+        lb_policy round_robin
+        @notfound status 404
+        handle_response @notfound {
+            copy_response 200
+        }
+    }
+}

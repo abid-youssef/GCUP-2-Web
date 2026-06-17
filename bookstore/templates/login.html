@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia, serif; background: #fafaf8; color: #222; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .card { background: #fff; padding: 2rem 2.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.12); width: 100%; max-width: 360px; }
+    h2 { font-size: 1.2rem; font-weight: normal; margin-bottom: 1.5rem; color: #2c3e50; }
+    label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; color: #555; }
+    input[type=text], input[type=password] { width: 100%; padding: 0.5rem 0.6rem; border: 1px solid #ccc; font-size: 0.95rem; margin-bottom: 1rem; }
+    input:focus { outline: none; border-color: #2c3e50; }
+    button { width: 100%; padding: 0.6rem; background: #2c3e50; color: #fff; border: none; cursor: pointer; font-size: 0.95rem; }
+    button:hover { background: #3d5166; }
+    .error { color: #c0392b; font-size: 0.85rem; margin-top: 0.75rem; display: none; }
+    .back { display: block; text-align: center; margin-top: 1rem; font-size: 0.8rem; color: #aaa; text-decoration: none; }
+    .back:hover { color: #555; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>Admin Login</h2>
+  <label for="username">Username</label>
+  <input type="text" id="username" name="username" autocomplete="username">
+  <label for="password">Password</label>
+  <input type="password" id="password" name="password" autocomplete="current-password">
+  <button id="submit-btn">Sign in</button>
+  <div class="error" id="error-msg">Invalid credentials.</div>
+  <a href="/" class="back">&larr; Back to catalogue</a>
+</div>
+<script>
+  document.getElementById('submit-btn').addEventListener('click', async () => {
+    const u = document.getElementById('username').value;
+    const p = document.getElementById('password').value;
+    const err = document.getElementById('error-msg');
+    err.style.display = 'none';
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({username: u, password: p})
+    });
+    if (res.ok) {
+      window.location.href = '/admin/backup';
+    } else {
+      err.style.display = 'block';
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('submit-btn').click();
+  });
+</script>
+</body>
+</html>

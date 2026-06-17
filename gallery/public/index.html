@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080808;
+      color: #e0e0e0;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      height: 56px;
+      background: rgba(8, 8, 8, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .logo {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .tagline {
+      font-size: 0.75rem;
+      color: #555;
+      letter-spacing: 0.05em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .controls label {
+      font-size: 0.75rem;
+      color: #555;
+    }
+
+    .controls select {
+      background: #111;
+      color: #ccc;
+      border: 1px solid #222;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .controls select:focus { border-color: #444; }
+
+    .grid {
+      columns: 4 280px;
+      gap: 3px;
+      padding: 3px;
+    }
+
+    .card {
+      break-inside: avoid;
+      position: relative;
+      overflow: hidden;
+      display: block;
+      margin-bottom: 3px;
+      background: #111;
+    }
+
+    .card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      transition: transform 0.4s ease;
+    }
+
+    .card:hover img { transform: scale(1.04); }
+
+    .card-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1rem;
+      background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .card:hover .card-overlay { opacity: 1; }
+
+    .card-name {
+      font-size: 0.7rem;
+      color: #aaa;
+      margin-bottom: 0.4rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+      text-decoration: none;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      width: fit-content;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: rgba(255, 255, 255, 0.22); }
+
+    .section-label {
+      padding: 1.25rem 1.5rem 0.75rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444;
+    }
+
+    #sentinel { height: 1px; }
+
+    .spinner {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      color: #333;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <span class="logo">Gallery</span>
+  </div>
+  <span class="tagline">every wallpaper is yours to keep</span>
+  <div class="controls">
+    <label for="res">resolution</label>
+    <select id="res">
+      <option value="1920/1080">1920 × 1080</option>
+      <option value="2560/1440">2560 × 1440</option>
+      <option value="3840/2160">3840 × 2160</option>
+      <option value="1280/800">1280 × 800</option>
+      <option value="2048/1152">2048 × 1152</option>
+    </select>
+  </div>
+</header>
+
+<p class="section-label">curated</p>
+<div class="grid" id="curated"></div>
+
+<p class="section-label">browse</p>
+<div class="grid" id="grid"></div>
+
+<div class="spinner" id="spinner">loading…</div>
+<div id="sentinel"></div>
+
+<script>
+  const curatedEl = document.getElementById('curated');
+  const gridEl    = document.getElementById('grid');
+  const resEl     = document.getElementById('res');
+  const spinner   = document.getElementById('spinner');
+
+  let nextId = 1;
+  let loading = false;
+
+  function thumbUrl(seed, w, h) {
+    return `https://picsum.photos/seed/${seed}/${w}/${h}`;
+  }
+
+  function makeCard(imgSrc, name, downloadHref, container) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.alt = name;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    const overlay = document.createElement('div');
+    overlay.className = 'card-overlay';
+    const label = document.createElement('div');
+    label.className = 'card-name';
+    label.textContent = name;
+    const btn = document.createElement('a');
+    btn.className = 'btn';
+    btn.href = downloadHref;
+    btn.setAttribute('download', '');
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 1v7M3 5l3 3 3-3M1 10h10"/></svg> download`;
+    overlay.append(label, btn);
+    card.append(img, overlay);
+    container.appendChild(card);
+  }
+
+  async function loadCurated() {
+    let files = [];
+    try {
+      const r = await fetch('/api/gallery');
+      files = await r.json();
+    } catch (_) {}
+    for (const f of files) {
+      makeCard(
+        thumbUrl(f.replace(/\.[^.]+$/, ''), 800, 450),
+        f,
+        `/download/${encodeURIComponent(f)}`,
+        curatedEl
+      );
+    }
+  }
+
+  function loadBatch(count = 20) {
+    if (loading) return;
+    loading = true;
+    spinner.style.display = 'block';
+    const [w, h] = resEl.value.split('/');
+    const tw = Math.min(800, parseInt(w));
+    const th = Math.round(tw * parseInt(h) / parseInt(w));
+    for (let i = 0; i < count; i++) {
+      const id = nextId++;
+      makeCard(
+        thumbUrl(id, tw, th),
+        `wallpaper-${String(id).padStart(5, '0')}.jpg`,
+        `https://picsum.photos/seed/${id}/${w}/${h}`,
+        gridEl
+      );
+    }
+    spinner.style.display = 'none';
+    loading = false;
+  }
+
+  resEl.addEventListener('change', () => {
+    gridEl.innerHTML = '';
+    nextId = 1;
+    loadBatch(24);
+  });
+
+  new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) loadBatch(24);
+  }, { rootMargin: '400px' }).observe(document.getElementById('sentinel'));
+
+  loadCurated();
+  loadBatch(24);
+</script>
+
+</body>
+</html>

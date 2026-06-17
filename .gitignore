@@ -1,0 +1,8 @@
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+sshkey
+sshkey.pub
+**/SPEC.md
+**/spec.md

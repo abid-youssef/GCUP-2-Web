@@ -1,0 +1,18 @@
+services:
+  web:
+    build: ./web
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  bot:
+    build: ./bot
+    environment:
+      - NOTE=NOTE_37390fc637507b3bfb5244d7946d12ec
+      - TARGET=http://web:3000
+      - PORT=3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      - web
+    restart: unless-stopped

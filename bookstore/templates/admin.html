@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Backup Manager</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; background: #1e1e1e; color: #d4d4d4; min-height: 100vh; }
+    header { background: #252526; padding: 0.75rem 1.5rem; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between; }
+    header span { font-size: 0.9rem; color: #9cdcfe; }
+    header a { color: #888; font-size: 0.8rem; text-decoration: none; }
+    header a:hover { color: #ccc; }
+    .container { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    h2 { font-size: 1rem; color: #9cdcfe; margin-bottom: 1.25rem; font-weight: normal; }
+    .field { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 0.3rem; }
+    input[type=text] { width: 100%; padding: 0.45rem 0.6rem; background: #2d2d2d; border: 1px solid #444; color: #d4d4d4; font-family: monospace; font-size: 0.9rem; }
+    input:focus { outline: none; border-color: #569cd6; }
+    .actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; }
+    button { padding: 0.45rem 1.2rem; border: none; cursor: pointer; font-family: monospace; font-size: 0.9rem; }
+    #btn-save { background: #569cd6; color: #fff; }
+    #btn-save:hover { background: #4a88c0; }
+    #btn-run { background: #4ec9b0; color: #1e1e1e; }
+    #btn-run:hover { background: #3aaf97; }
+    .output-label { font-size: 0.8rem; color: #888; margin-top: 1.75rem; margin-bottom: 0.4rem; }
+    #output { background: #0d0d0d; border: 1px solid #333; padding: 0.75rem; min-height: 5rem; white-space: pre-wrap; font-size: 0.85rem; color: #b5cea8; display: none; }
+    .status { font-size: 0.8rem; color: #888; margin-top: 0.5rem; min-height: 1.2em; }
+    .status.ok { color: #4ec9b0; }
+    .status.err { color: #f48771; }
+  </style>
+</head>
+<body>
+<header>
+  <span>Backup Manager</span>
+  <a href="/">Catalogue</a>
+</header>
+<div class="container">
+  <h2>Configuration</h2>
+  <div class="field">
+    <label for="backup-server">Backup Server</label>
+    <input type="text" id="backup-server" placeholder="hostname or IP">
+  </div>
+  <div class="field">
+    <label for="archive-path">Archive Path</label>
+    <input type="text" id="archive-path" placeholder="/mnt/backup">
+  </div>
+  <div class="actions">
+    <button id="btn-save">Save</button>
+    <button id="btn-run">Run Backup</button>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="output-label" id="output-label" style="display:none">Output</div>
+  <pre id="output"></pre>
+</div>
+<script>
+  async function post(data) {
+    return fetch('/admin/backup', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams(data)
+    });
+  }
+
+  document.getElementById('btn-save').addEventListener('click', async () => {
+    const st = document.getElementById('status');
+    st.className = 'status';
+    st.textContent = 'Saving…';
+    const res = await post({
+      action: 'save',
+      backup_server: document.getElementById('backup-server').value,
+      archive_path: document.getElementById('archive-path').value
+    });
+    const json = await res.json();
+    if (json.ok) {
+      st.className = 'status ok';
+      st.textContent = 'Configuration saved.';
+    } else {
+      st.className = 'status err';
+      st.textContent = json.error || 'Error.';
+    }
+  });
+
+  document.getElementById('btn-run').addEventListener('click', async () => {
+    const st = document.getElementById('status');
+    const out = document.getElementById('output');
+    const lbl = document.getElementById('output-label');
+    st.className = 'status';
+    st.textContent = 'Running…';
+    out.style.display = 'none';
+    lbl.style.display = 'none';
+    const res = await post({action: 'run'});
+    const json = await res.json();
+    st.textContent = '';
+    lbl.style.display = 'block';
+    out.style.display = 'block';
+    out.textContent = json.output || json.error || '';
+  });
+</script>
+</body>
+</html>
